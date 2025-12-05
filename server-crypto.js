@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 8080 }); // Порт 8080
 
 let price = 100;
 
@@ -19,7 +19,7 @@ setInterval(() => {
     const change = (Math.random() * 10) - 5;
     price = Math.max(1, price + change);
     
-    const update = JSON.stringify({ type: 'price', value: price.toFixed(2) });
+    const update = JSON.stringify({ type: 'rate', rate: price.toFixed(2) }); 
     
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
@@ -31,7 +31,7 @@ setInterval(() => {
 wss.on('connection', ws => {
     let userState = { usd: 1000, crypto: 0 }; 
 
-    ws.send(JSON.stringify({ type: 'price', value: price.toFixed(2) }));
+    ws.send(JSON.stringify({ type: 'rate', rate: price.toFixed(2) })); 
     sendBalance(ws, userState);
 
     ws.on('message', message => {
@@ -39,17 +39,21 @@ wss.on('connection', ws => {
         
         let operationSuccessful = false;
 
-        if (msg.action === 'buy') {
+        if (msg.action === 'buy') { 
             if (userState.usd >= price) {
                 userState.usd -= price;
                 userState.crypto += 1;
                 operationSuccessful = true;
+            } else {
+                ws.send(JSON.stringify({ type: 'error', message: 'Недостатньо USD!' }));
             }
-        } else if (msg.action === 'sell') {
+        } else if (msg.action === 'sell') { 
             if (userState.crypto >= 1) {
                 userState.crypto -= 1;
                 userState.usd += price;
                 operationSuccessful = true;
+            } else {
+                ws.send(JSON.stringify({ type: 'error', message: 'Недостатньо Криптовалюти!' }));
             }
         }
         

@@ -21,42 +21,41 @@
     <div id="statusMessage" style="color: red; margin-top: 20px;"></div>
 
     <script>
-        // 1
-        const socket = new WebSocket('ws://localhost:3000');
+        const socket = new WebSocket('ws://localhost:8080'); 
         
         const rateDisplay = document.getElementById('currentRate');
         const balanceUSDDisplay = document.getElementById('balanceUSD');
         const balanceCryptoDisplay = document.getElementById('balanceCrypto');
         const statusMessage = document.getElementById('statusMessage');
 
-        // 2
         socket.onopen = function() {
             console.log('WebSocket підключено.');
         };
 
-        // 3
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
+            statusMessage.textContent = ''; 
 
             if (data.type === 'rate') {
-                
-                rateDisplay.textContent = data.rate.toFixed(2);
-            } else if (data.type === 'balance') {
-                
-                balanceUSDDisplay.textContent = data.usd;
-                balanceCryptoDisplay.textContent = data.crypto;
-                statusMessage.textContent = '';
-            } else if (data.type === 'error') {
-                
+                rateDisplay.textContent = parseFloat(data.rate).toFixed(2); 
+            } 
+        
+            else if (data.type === 'balance') { 
+               
+                balanceUSDDisplay.textContent = data.data.usd;
+                balanceCryptoDisplay.textContent = data.data.crypto;
+            } 
+    
+            else if (data.type === 'error') {
                 statusMessage.textContent = 'Помилка: ' + data.message;
             }
         };
 
-        // 4
-        function sendAction(action) {
+
+        window.sendAction = function(action) { 
             if (socket.readyState === WebSocket.OPEN) {
-                
-                socket.send(JSON.stringify({ type: action }));
+               
+                socket.send(JSON.stringify({ action: action }));
             } else {
                 statusMessage.textContent = 'Помилка: З\'єднання не встановлено.';
             }
