@@ -2,34 +2,64 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Crypto Exchange</title>
+    <title>Біржа на WebSocket</title>
 </head>
 <body>
-    <h1>Crypto Exchange</h1>
-    <h2>Current Price: <span id="price">...</span> USD</h2>
-    <h3>Balance: <span id="usd">0</span> USD</h3>
-    <h3>Crypto: <span id="crypto">0</span> Coins</h3>
+    <h1>Біржа Криптовалют (WebSocket)</h1>
 
-    <button onclick="trade('buy')">Buy (1 Coin)</button>
-    <button onclick="trade('sell')">Sell (1 Coin)</button>
+    <h2>Поточний курс: <span id="currentRate">...</span> USD</h2>
+
+    <h3>Ваш Баланс</h3>
+    <p>USD: <span id="balanceUSD">1000.00</span></p>
+    <p>Криптовалюта: <span id="balanceCrypto">0.00</span> од.</p>
+
+    <hr>
+    
+    <button onclick="sendAction('buy')">Buy 1 Crypto</button>
+    <button onclick="sendAction('sell')">Sell 1 Crypto</button>
+
+    <div id="statusMessage" style="color: red; margin-top: 20px;"></div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:8080');
+        // 1
+        const socket = new WebSocket('ws://localhost:3000');
+        
+        const rateDisplay = document.getElementById('currentRate');
+        const balanceUSDDisplay = document.getElementById('balanceUSD');
+        const balanceCryptoDisplay = document.getElementById('balanceCrypto');
+        const statusMessage = document.getElementById('statusMessage');
 
-        ws.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
+        // 2
+        socket.onopen = function() {
+            console.log('WebSocket підключено.');
+        };
 
-            if (msg.type === 'price') {
-                document.getElementById('price').innerText = msg.value;
-            } else if (msg.type === 'balance') {
-                document.getElementById('usd').innerText = msg.data.usd.toFixed(2);
-                document.getElementById('crypto').innerText = msg.data.crypto;
+        // 3
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'rate') {
+                
+                rateDisplay.textContent = data.rate.toFixed(2);
+            } else if (data.type === 'balance') {
+                
+                balanceUSDDisplay.textContent = data.usd;
+                balanceCryptoDisplay.textContent = data.crypto;
+                statusMessage.textContent = '';
+            } else if (data.type === 'error') {
+                
+                statusMessage.textContent = 'Помилка: ' + data.message;
             }
         };
 
-        function trade(action) {
-            
-            ws.send(JSON.stringify({ action }));
+        // 4
+        function sendAction(action) {
+            if (socket.readyState === WebSocket.OPEN) {
+                
+                socket.send(JSON.stringify({ type: action }));
+            } else {
+                statusMessage.textContent = 'Помилка: З\'єднання не встановлено.';
+            }
         }
     </script>
 </body>
