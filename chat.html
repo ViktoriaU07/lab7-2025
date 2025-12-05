@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE Chat</title>
+    <style>
+        .message { margin: 5px; padding: 5px; border-bottom: 1px solid #ccc; }
+        
+    </style>
+</head>
+<body>
+    <input type="text" id="username" placeholder="Ваше ім'я" />
+    <input type="text" id="text" placeholder="Повідомлення" />
+    <button onclick="sendMessage()">Send</button> <div id="messages"></div> <script>
+        const eventSource = new EventSource('/events');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const chat = document.getElementById('messages');
+            
+            const color = stringToColor(data.username);
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `<span style="color:${color}"><b>${data.username}</b></span> [${data.time}]: ${data.text}`; // [cite: 247]
+            chat.appendChild(msgDiv);
+        };
+
+        async function sendMessage() {
+            const username = document.getElementById('username').value;
+            const text = document.getElementById('text').value;
+
+            if (!username || !text) return alert("Введіть ім'я та повідомлення");
+
+            await fetch('/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, text })
+            });
+            document.getElementById('text').value = '';
+        }
+
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return `hsl(${hash % 360}, 70%, 50%)`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Exchange</title>
+</head>
+<body>
+    <h1>Crypto Exchange</h1>
+    <h2>Current Price: <span id="price">...</span> USD</h2>
+    <h3>Balance: <span id="usd">0</span> USD</h3>
+    <h3>Crypto: <span id="crypto">0</span> Coins</h3>
+
+    <button onclick="trade('buy')">Buy (1 Coin)</button>
+    <button onclick="trade('sell')">Sell (1 Coin)</button>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === 'price') {
+                document.getElementById('price').innerText = msg.value;
+            } else if (msg.type === 'balance') {
+                document.getElementById('usd').innerText = msg.data.usd.toFixed(2);
+                document.getElementById('crypto').innerText = msg.data.crypto;
+            }
+        };
+
+        function trade(action) {
+            
+            ws.send(JSON.stringify({ action }));
+        }
+    </script>
+</body>
+</html>
